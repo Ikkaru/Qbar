@@ -1,0 +1,60 @@
+﻿{
+  "bar": {
+    "position": "top",
+    "integrations": "appbar",
+    "autoHide": false,
+    "height": 40,
+    "marginTop": 2,
+    "marginHorizontal": 12,
+    "hideOnFullWindow": false,
+    "hideOnFullscreen": true,
+    "backdrop": "clear",
+    "backdropStrength": 0.5,
+    "backdropColor": "#1e1e28",
+    "backdropOpacity": 0.55,
+    "borderWidth": 0,
+    "borderColor": "#404050",
+    "shape": "square",
+    "cornerRadius": 12,
+    "surfaceOpacity": 0,
+    "shadowEnabled": false,
+    "shadowHeight": 9,
+    "shadowOpacity": 0.16,
+    "shadowHairline": false,
+    "shadowHairlineOpacity": 0.28
+  },
+  "theme": {
+    "seed": "#89b4fa",
+    "font": "Poppins",
+    "iconFont": "MaterialSymbolsRounded",
+    "autoContrast": true,
+    "textOnLight": "#101010",
+    "textOnDark": "#FFFFFF",
+    "lightThreshold": 165
+  },
+  "layout": {
+    "left": ["windowstatus", "graph", "workspaces"],
+    "center": [],
+    "right": ["indicators", "network", "clock"]
+  },
+  "modules": {
+    "workspaces": { "enabled": false, "mode": "persistent" },
+    "tray": { "enabled": false, "mirror": false },
+    "clock": { "enabled": true, "format": "HH:mm" },
+    "indicators": {
+      "enabled": true,
+      "order": ["network", "volume", "battery", "bluetooth", "brightness"]
+    },
+    "volume": { "enabled": true, "perApp": true },
+    "network": { "enabled": true },
+    "media": { "enabled": false },
+    "graph": { "enabled": true, "series": ["cpu", "ram", "net"], "intervalMs": 1000 },
+    "notifications": { "enabled": false, "durationMs": 4000 },
+    "windowstatus": { "enabled": true, "maxWidth": 400, "showApp": true, "showTitle": true }
+  },
+  "hotkeys": {
+    "toggleBar": "Ctrl+Alt+B",
+    "reload": "Ctrl+Alt+R",
+    "clearNotifications": "Ctrl+Alt+N"
+  }
+}

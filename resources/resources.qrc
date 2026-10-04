@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="qml/Bar.qml">../src/qml/Bar.qml</file>
+        <file alias="qml/theme.qml">../src/qml/theme.qml</file>
+        <file alias="qml/modules/Clock.qml">../src/qml/modules/Clock.qml</file>
+        <file alias="qml/modules/Workspaces.qml">../src/qml/modules/Workspaces.qml</file>
+        <file alias="qml/modules/WindowStatus.qml">../src/qml/modules/WindowStatus.qml</file>
+        <file alias="qml/modules/Indicators.qml">../src/qml/modules/Indicators.qml</file>
+        <file alias="qml/modules/Graph.qml">../src/qml/modules/Graph.qml</file>
+        <file alias="qml/modules/Network.qml">../src/qml/modules/Network.qml</file>
+        <file alias="qml/popups/VolumePopup.qml">../src/qml/popups/VolumePopup.qml</file>
+        <file alias="qml/popups/NetworkPopup.qml">../src/qml/popups/NetworkPopup.qml</file>
+        <file alias="qml/popups/BatteryPopup.qml">../src/qml/popups/BatteryPopup.qml</file>
+        <file alias="fonts/Poppins-Regular.ttf">../resources/fonts/Poppins-Regular.ttf</file>
+        <file alias="fonts/Poppins-Medium.ttf">../resources/fonts/Poppins-Medium.ttf</file>
+        <file alias="fonts/Poppins-SemiBold.ttf">../resources/fonts/Poppins-SemiBold.ttf</file>
+        <file alias="fonts/Poppins-Bold.ttf">../resources/fonts/Poppins-Bold.ttf</file>
+        <file alias="fonts/MaterialSymbolsRounded.ttf">../resources/fonts/MaterialSymbolsRounded-subset.ttf</file>
+        <file>config.json</file>
+    </qresource>
+</RCC>
