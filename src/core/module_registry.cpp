@@ -1,18 +1,22 @@
 #include "module_registry.h"
 #include <QSet>
 
+// Every entry here must point at a file that exists AND is listed in
+// resources.qrc. A Loader pointed at a missing qrc URL fails at runtime, not
+// at build time, so a stale entry here is a crash waiting for someone to add
+// the id to layout in config.json.
+//
+// media, tray and notifications are deliberately absent: they are planned but
+// unwritten. volume is absent too, because the volume control lives in
+// Indicators.qml as an icon plus popups/VolumePopup.qml - there is no bar-row
+// module for it.
 static const QMap<QString, QString> s_moduleQml = {
     {"clock", "qrc:/qml/modules/Clock.qml"},
     {"workspaces", "qrc:/qml/modules/Workspaces.qml"},
     {"windowstatus", "qrc:/qml/modules/WindowStatus.qml"},
     {"indicators", "qrc:/qml/modules/Indicators.qml"},
     {"graph", "qrc:/qml/modules/Graph.qml"},
-    {"media", "qrc:/qml/modules/Media.qml"},
-    {"volume", "qrc:/qml/modules/Volume.qml"},
     {"network", "qrc:/qml/modules/Network.qml"},
-    {"graph", "qrc:/qml/modules/Graph.qml"},
-    {"tray", "qrc:/qml/modules/Tray.qml"},
-    {"notifications", "qrc:/qml/modules/Notifications.qml"},
 };
 
 void ModuleRegistry::rebuild() {

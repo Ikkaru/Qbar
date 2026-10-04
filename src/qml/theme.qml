@@ -12,7 +12,8 @@ QtObject {
     property color onSurfaceContainer: "#c0c0c0"
     property color outline: "#404050"
     property color surfaceVariant: "#252535"
-    // Backs Theme.tertiary from C++; shown here so the token is discoverable.
+    // Amber, for the battery-saver fill. Fixed hue, not the M3 tertiary role:
+    // a seed-derived one came out gold or pink depending on the accent.
     property color tertiary: "#f5a623"
     property color onTertiary: "#4a2f00"
     // Low battery. Fixed red, not seed-derived.

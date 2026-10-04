@@ -1,5 +1,8 @@
 #include "hotkeys.h"
-#include <QApplication>
+// QCoreApplication, not QApplication: the only thing needed from the app object
+// is installNativeEventFilter, which both provide, and using the lighter one
+// keeps the tests off QtWidgets.
+#include <QCoreApplication>
 #include <QMap>
 
 namespace {
@@ -17,9 +20,11 @@ const QMap<WORD, QString> namedKeys = {
     {VK_SNAPSHOT, "printscreen"}, {VK_APPS, "apps"},
 };
 
+} // namespace
+
 // "Ctrl+Alt+R" -> MOD_CONTROL|MOD_ALT|MOD_NOREPEAT, 'R'. The key part is
 // either a single character or a named key; modifiers may appear in any order.
-bool parseChord(const QString& chord, UINT& mods, UINT& vk) {
+bool parseHotkeyChord(const QString& chord, UINT& mods, UINT& vk) {
     const QStringList parts = chord.split('+', Qt::SkipEmptyParts);
     if (parts.isEmpty()) return false;
 
@@ -54,8 +59,6 @@ bool parseChord(const QString& chord, UINT& mods, UINT& vk) {
     return false;
 }
 
-} // namespace
-
 Hotkeys::Hotkeys(QObject* parent) : QObject(parent) {
     qApp->installNativeEventFilter(this);
 }
@@ -68,7 +71,7 @@ Hotkeys::~Hotkeys() {
 
 bool Hotkeys::registerHotkey(const QString& action, const QString& chord) {
     UINT mods = 0, vk = 0;
-    if (!parseChord(chord, mods, vk)) return false;
+    if (!parseHotkeyChord(chord, mods, vk)) return false;
 
     const int id = m_nextId++;
     if (!RegisterHotKey(nullptr, id, mods, vk)) return false;

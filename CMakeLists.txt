@@ -65,3 +65,57 @@ set_target_properties(qbar PROPERTIES
     WIN32_EXECUTABLE ON
     MACOSX_BUNDLE ON
 )
+
+# --- tests -------------------------------------------------------------------
+# QTest from the Qt already in the toolchain, so no new dependency. The
+# services under test are plain QObjects, so every binary here runs guiless.
+enable_testing()
+
+find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
+
+set(QBAR_TESTABLE_SOURCES
+    src/core/config.h
+    src/core/config.cpp
+    src/core/hotkeys.h
+    src/core/hotkeys.cpp
+    src/core/theme.h
+    src/core/theme.cpp
+    src/core/module_registry.h
+    src/core/module_registry.cpp
+)
+
+# A tiny helper rather than repeating the list per test.
+function(qbar_add_test name)
+    qt_add_executable(${name} ${ARGN} ${QBAR_TESTABLE_SOURCES})
+    target_include_directories(${name} PRIVATE src)
+    # Gui and Qml are needed by the sources under test (QColor in theme.h,
+    # QQmlContext in module_registry.h), not by the tests themselves.
+    target_link_libraries(${name} PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Test)
+    # Keep the console window: without this the test binary is built as a GUI app
+    # and its output vanishes, which is the opposite of what a test runner wants.
+    set_target_properties(${name} PROPERTIES WIN32_EXECUTABLE OFF MACOSX_BUNDLE OFF)
+    add_test(NAME ${name} COMMAND ${name})
+endfunction()
+
+qbar_add_test(test_config tests/test_config.cpp)
+# WORKING_DIRECTORY so tests that read the real resources/config.json resolve it
+# relative to the source tree, not to wherever ctest was invoked from.
+qbar_add_test(test_theme tests/test_theme.cpp)
+set_tests_properties(test_theme PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+# The registry test links resources.qrc so it can prove that each id it resolves
+# to actually exists inside the resource bundle. That is the check that would
+# have caught "graph" being mapped twice, and media/tray/notifications/volume
+# being listed with no QML file at all.
+qt_add_executable(test_module_registry
+    tests/test_module_registry.cpp
+    ${QBAR_TESTABLE_SOURCES}
+    resources/resources.qrc
+)
+target_include_directories(test_module_registry PRIVATE src)
+target_link_libraries(test_module_registry PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Test)
+set_target_properties(test_module_registry PROPERTIES WIN32_EXECUTABLE OFF MACOSX_BUNDLE OFF)
+add_test(NAME test_module_registry
+         COMMAND test_module_registry
+         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

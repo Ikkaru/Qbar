@@ -28,3 +28,9 @@ private:
     QVector<Entry> m_entries;
     int m_nextId = 1;
 };
+
+// Parses "Ctrl+Alt+R" into the modifier mask and virtual key RegisterHotKey
+// wants. Public rather than file-local because the chord comes straight out of
+// config.json, which makes it untrusted input: a typo there should be a test
+// failure, not a silently unregistered hotkey. MOD_NOREPEAT is always set.
+bool parseHotkeyChord(const QString& chord, UINT& modsOut, UINT& vkOut);

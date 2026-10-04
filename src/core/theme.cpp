@@ -71,13 +71,13 @@ void Theme::generate(const QString& seedHex) {
     m_outline = oklchToRgb(0.50, 0.02, H);
     m_surfaceVariant = oklchToRgb(0.25, 0.04, H);
 
-    // M3 tertiary sits on the secondary palette, which is the accent hue plus
-    // 60 degrees. Generated rather than hardcoded so it tracks the seed, and so
-    // "battery saver on" reads as amber on a blue theme instead of clashing.
-    double secondaryH = H + 60.0;
-    if (secondaryH >= 360.0) secondaryH -= 360.0;
-    m_tertiary = oklchToRgb(0.78, 0.16, secondaryH);
-    m_onTertiary = oklchToRgb(0.20, 0.04, secondaryH);
+    // Amber, for the battery-saver fill in the popup. Fixed hue rather than the
+    // M3 tertiary role, which would sit on the seed's secondary palette: that
+    // rendered gold on a blue seed and pink on a red one, so "power saving" was
+    // never reliably the amber it is supposed to be. Its only consumer is that
+    // one fill, so there is nothing else for a seed-derived accent to serve.
+    m_tertiary = oklchToRgb(0.78, 0.16, 70);
+    m_onTertiary = oklchToRgb(0.20, 0.04, 70);
 
     // M3 error role: fixed red rather than a seed-derived hue. Low battery is
     // red in every theme because it is a warning about the hardware, not a
