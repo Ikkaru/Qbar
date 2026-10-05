@@ -127,34 +127,22 @@ void BarWindow::applyBackdrop() {
         // The composition attribute, not DWMWA_SYSTEMBACKDROP_TYPE. The system
         // backdrop paints a flat tint with no blur at all - measured on this
         // machine as a uniform 69,69,69 across the whole bar - which reads as a
-        // solid block. The accent path blurs what is actually behind the window
-        // and honours the tint alpha, so `backdropStrength` can dial it from
-        // clear glass to near-opaque.
-        Dwm::disableBackdrop(hwnd);
-        Dwm::setAcrylic(hwnd, m_backdropColor, m_backdropStrength);
-        return;
-    }
-
-    // No acrylic tint to apply, so clear any leftover accent policy.
-    Dwm::clearAcrylic(hwnd);
-
-    if (m_backdrop == "mica") {
-        // Deliberately NOT DWMSBT_MAINWINDOW. Real Mica samples the window's own
-        // background rather than the desktop, so it measures as a flat 29,29,29
-        // with no blur at all, and its tint cannot be tuned: setting the window's
-        // class background brush to five different colours left it at exactly
-        // 29,29,29 every time. A material that cannot be made less strong or
-        // less weak is not usable for a bar.
+        // solid block. The accent path blurs what is actually behind the window,
+        // and the QML layer above it sets density (see Bar.qml).
         //
-        // The accent blur gives real Mica-like behaviour - a neutral wash that
-        // stays legible - and the QML layer above it sets the density. That is
-        // what finally makes the "medium strength Mica" this mode is for
-        // reachable, rather than the two available extremes.
+        // Note the order: setAcrylic last. disableBackdrop() writes
+        // DWMWA_SYSTEMBACKDROP_TYPE, and doing that after the accent policy is
+        // installed cancels it - which looks exactly like acrylic never being
+        // applied at all.
         Dwm::disableBackdrop(hwnd);
         Dwm::setAcrylic(hwnd, m_backdropColor, m_backdropStrength);
         return;
     }
 
+    // "clear", and it has to actively undo the material. Clearing only the QML
+    // layer is not enough: the accent policy stays on the window and the blur
+    // remains, which is what made switching to clear look like a no-op.
+    Dwm::clearAcrylic(hwnd);
     Dwm::disableBackdrop(hwnd);
 }
 
@@ -162,6 +150,11 @@ void BarWindow::setBackdrop(const QString& backdrop) {
     if (m_backdrop == backdrop) return;
     m_backdrop = backdrop;
     applyBackdrop();
+    // Without this the QML binding on backdropMode keeps the old value and the
+    // surface colour never updates, so switching to "clear" left the previous
+    // material's tint painted on screen. The property declares backdropChanged as
+    // its NOTIFY signal, so the setter has to fire it.
+    emit backdropChanged();
 }
 
 void BarWindow::applyCornerPreference() {

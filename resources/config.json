@@ -8,7 +8,7 @@
     "marginHorizontal": 12,
     "hideOnFullWindow": false,
     "hideOnFullscreen": true,
-    "backdrop": "mica",
+    "backdrop": "acrylic",
     "backdropStrength": 0.15,
     "backdropColor": "#12121a",
     "backdropOpacity": 0.55,

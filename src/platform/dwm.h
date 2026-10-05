@@ -7,7 +7,11 @@
 void qbarLog(const QString& msg);
 
 namespace Dwm {
-    void enableBackdrop(HWND hwnd, const QString& type); // "acrylic" | "mica" | "solid"
+    // Only disableBackdrop remains of the DWMWA_SYSTEMBACKDROP_TYPE pair, and
+    // nothing sets a type any more: DWMSBT_TRANSIENTWINDOW paints a flat tint
+    // with no blur, and DWMSBT_MAINWINDOW is flat with a locked tint. Both were
+    // measured uniform across the bar while the wallpaper behind them varied, so
+    // neither is usable and the accent in setAcrylic() replaced them both.
     void disableBackdrop(HWND hwnd);
     void enableRoundedCorners(HWND hwnd);
     void disableRoundedCorners(HWND hwnd);

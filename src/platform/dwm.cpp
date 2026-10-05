@@ -24,23 +24,6 @@
 #define DWMWCP_NONE 1
 #endif
 
-// Kept for completeness, but nothing calls it: the only backdrop Windows can
-// actually tune is the composition accent, and both system-backdrop types are
-// unusable for a bar. DWMSBT_MAINWINDOW (Mica) samples the window's own
-// background, so it is flat and its tint is locked; DWMSBT_TRANSIENTWINDOW
-// (acrylic) paints a flat tint with no blur. Both measured uniform across the
-// whole bar while the wallpaper behind them varied.
-void Dwm::enableBackdrop(HWND hwnd, const QString& type) {
-    if (!hwnd) return;
-    int backdrop = DWMSBT_NONE;
-    if (type == "mica") {
-        backdrop = DWMSBT_MAINWINDOW;
-    } else if (type == "acrylic") {
-        backdrop = DWMSBT_TRANSIENTWINDOW;
-    }
-    DwmSetWindowAttribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, &backdrop, sizeof(backdrop));
-}
-
 void Dwm::disableBackdrop(HWND hwnd) {
     if (!hwnd) return;
     int backdrop = DWMSBT_NONE;
@@ -90,7 +73,6 @@ namespace {
 constexpr int WcaAccentPolicy = 19;
 constexpr int AccentDisable = 0;
 constexpr int AccentEnableAcrylicBlurBehind = 4;
-constexpr int AccentEnableHostBackdrop = 5;
 
 struct AccentPolicy {
     int accentState;
@@ -128,16 +110,22 @@ bool setCompositionAttribute(HWND hwnd, const WindowCompositionAttributeData& da
 void Dwm::setAcrylic(HWND hwnd, const QColor& tint, double strength) {
     if (!hwnd) return;
 
-    // Windows 11 ignores gradientColor for both acrylic states - the tint comes
-    // from the system's own light/dark material. So the accent here is used only
-    // to get a genuine blur, and density is controlled by the QML layer on top
-    // (see Bar.qml). HOSTBACKDROP is the lighter of the two and is what makes it
-    // read as glass rather than a solid block; ACRYLICBLURBEHIND is noticeably
-    // denser and flattens out the wallpaper behind it.
+    // Real acrylic: ACCENT_ENABLE_ACRYLICBLURBEHIND. The lighter HOSTBACKDROP
+    // variant is deliberately NOT used - acrylic is meant to be the denser of the
+    // two, and swapping in the lighter material is what made an earlier attempt at
+    // this mode read as washed-out glass rather than acrylic.
+    //
+    // Windows 11 does not honour gradientColor for the tint - density comes from
+    // the system's own light/dark material - so the accent is used for the blur
+    // and the QML layer above it controls density (see Bar.qml).
+    // Alpha 0x66, not 0xFF. A fully opaque gradient makes the accent cancel the
+    // blur entirely - measured identical to having no material at all - because
+    // the tint is composited on top of the blur at full strength. Partly
+    // transparent is what leaves the blur visible underneath.
     AccentPolicy policy;
-    policy.accentState = AccentEnableHostBackdrop;
+    policy.accentState = AccentEnableAcrylicBlurBehind;
     policy.accentFlags = 0;
-    policy.gradientColor = 0xFF000000;
+    policy.gradientColor = 0x66000000;
     policy.animationId = 0;
 
     WindowCompositionAttributeData data;
