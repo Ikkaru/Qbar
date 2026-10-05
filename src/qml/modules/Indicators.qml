@@ -104,9 +104,13 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
+                // Guarded on which popup is open rather than on whether one is:
+                // see the note on the volume icon below. Skipping the open while
+                // another tooltip was still visible left the pointer inside this
+                // hover area with no further onEntered, so nothing ever appeared.
                 onEntered: {
                     popupHost.anchor = batterySlot;
-                    if (!popupHost.isOpen)
+                    if (popupHost.currentUrl !== "qrc:/qml/popups/BatteryPopup.qml")
                         popupHost.open("qrc:/qml/popups/BatteryPopup.qml")
                 }
                 onExited: popupHost.close()
@@ -129,12 +133,20 @@ Rectangle {
                 anchors.fill: parent
                 hoverEnabled: true
                 // Hover gives the level readout; click gives the full mixer.
-                // onEntered only opens when nothing is showing, otherwise moving
-                // the pointer onto the icon right after closing the mixer would pop
-                // a tooltip back up on its own.
+                //
+                // The guard is on which popup is open, not on whether one is. A
+                // plain "if (!popupHost.isOpen)" skipped the open whenever another
+                // tooltip happened to be up: sliding from the battery straight onto
+                // this icon while that one was still fading left the pointer
+                // already inside here with onEntered long gone, so nothing appeared
+                // until the pointer left and came back.
+                //
+                // Checking the URL is what makes both cases behave. Leaving the
+                // mixer with the pointer still over the icon re-enters without a
+                // movement event, and it must not spring the tooltip back up.
                 onEntered: {
                     popupHost.anchor = volumeIcon;
-                    if (!popupHost.isOpen)
+                    if (popupHost.currentUrl !== "qrc:/qml/popups/VolumeLevelPopup.qml")
                         popupHost.open("qrc:/qml/popups/VolumeLevelPopup.qml")
                 }
                 onExited: popupHost.close()

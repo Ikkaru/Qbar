@@ -45,9 +45,13 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
+        // Guarded on which popup is open rather than on whether one is: sliding
+        // straight from another tooltip onto this icon while it was still visible
+        // used to skip the open, leaving the pointer inside this hover area with
+        // no further onEntered, so nothing appeared until it left and came back.
         onEntered: {
             popupHost.anchor = networkIcon;
-            if (!popupHost.isOpen)
+            if (popupHost.currentUrl !== "qrc:/qml/popups/NetworkPopup.qml")
                 popupHost.open("qrc:/qml/popups/NetworkPopup.qml");
         }
         onExited: popupHost.close()

@@ -10,12 +10,19 @@ class PopupHost : public QObject {
     Q_OBJECT
     Q_PROPERTY(QQuickItem* anchor READ anchor WRITE setAnchor NOTIFY anchorChanged)
     Q_PROPERTY(bool isOpen READ isOpenValue NOTIFY isOpenChanged)
+    // URL of the popup currently being shown, empty when none. QML compares this
+    // instead of isOpen to decide whether a hover should open its tooltip: "a
+    // popup is showing" is not the same question as "my popup is showing", and
+    // only the second one prevents a tooltip springing back up after its own
+    // popup closed.
+    Q_PROPERTY(QString currentUrl READ currentUrl NOTIFY isOpenChanged)
 
 public:
     explicit PopupHost(QObject* parent = nullptr);
 
     QQuickItem* anchor() const { return m_anchor; }
     void setAnchor(QQuickItem* item);
+    QString currentUrl() const { return m_popupUrl; }
 
     Q_INVOKABLE void open(const QString& url);
     Q_INVOKABLE void close();

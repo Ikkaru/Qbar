@@ -121,6 +121,13 @@ void PopupHost::close() {
     // The popup plays its own close animation on closeRequested; this timer is
     // what actually destroys it once that has had time to finish.
     m_closeTimer.start(120);
+    // currentUrl is cleared here rather than in finishClose(). During those 120ms
+    // the old popup is still visible and fading, so a QML hover landing in that
+    // window would still compare equal to its own URL and skip opening its
+    // replacement - leaving the pointer inside the hover area with nothing
+    // showing and no further onEntered to correct it.
+    m_popupUrl.clear();
+    emit isOpenChanged();
 }
 
 void PopupHost::finishClose() {
@@ -131,7 +138,7 @@ void PopupHost::finishClose() {
         m_popup->close();
         m_popup->deleteLater();
         m_popup = nullptr;
-        m_popupUrl.clear();
+        m_popupUrl.clear();   // already cleared by close(); harmless if open() called this
         emit isOpenChanged();
     }
 }
