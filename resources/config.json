@@ -9,7 +9,7 @@
     "hideOnFullWindow": false,
     "hideOnFullscreen": true,
     "backdrop": "mica",
-    "backdropStrength": 0.35,
+    "backdropStrength": 0.15,
     "backdropColor": "#12121a",
     "backdropOpacity": 0.55,
     "borderWidth": 0,
