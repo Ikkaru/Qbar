@@ -48,7 +48,31 @@ void PopupHost::open(const QString& url) {
         return;
     }
 
-    QQmlComponent component(engine, QUrl(url));
+    // Reuse the component per URL. Building a fresh QQmlComponent on every open
+    // registers another QML type with the engine, and a stack-local component is
+    // never unregistered - so hovering between two different tooltips grew the
+    // process by roughly 1.3 MB each time. Measured as a negative delta when
+    // hovering one icon repeatedly, which is what pinned it to the URL swap
+    // rather than to QQuickWindow creation in general.
+    //
+    // QMap rather than QHash: QHash stores nodes it must copy on rehash, which a
+    // move-only value type cannot be. QMap nodes are stable and need no copy.
+    // The value is a unique_ptr because QQmlComponent is neither copyable nor
+    // movable, so it cannot be stored by value.
+    // find first, then build only on a miss. An unconditional try_emplace would
+    // construct a QQmlComponent on every open and discard it when the key
+    // already existed, registering a QML type each time - the same leak this
+    // cache exists to remove.
+    //
+    // Stored as QObject* rather than the component itself: QQmlComponent is
+    // neither copyable nor movable, so it cannot be the value type of a Qt
+    // container, and QHash additionally needs to copy its nodes on rehash.
+    QQmlComponent** slot = &m_components[url];
+    if (!*slot) {
+        *slot = new QQmlComponent(engine, QUrl(url));
+    }
+    QQmlComponent& component = **slot;
+
     if (component.isError()) {
         for (const auto& e : component.errors())
             qWarning() << "Popup error:" << e.toString();

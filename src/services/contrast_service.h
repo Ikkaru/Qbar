@@ -45,6 +45,11 @@ public:
 
     void refresh();
 
+    // Cheap poll: reads the wallpaper path and only triggers a refresh, with its
+    // image decode, when that path actually changed.
+    void pollWallpaper();
+    QString currentWallpaperPath() const;
+
 signals:
     void changed();
 
@@ -70,4 +75,8 @@ private:
     int m_barHeight = 40;
 
     QTimer* m_timer = nullptr;
+    // Read on every poll so a wallpaper swap is noticed without decoding the image
+    // again. The registry key is the cheap signal - a string read - whereas the
+    // decode is what actually allocates.
+    QString m_lastWallpaperPath;
 };

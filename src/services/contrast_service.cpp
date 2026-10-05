@@ -64,10 +64,44 @@ double channelToLinear(int v) {
 } // namespace
 
 ContrastService::ContrastService(QObject* parent) : QObject(parent) {
+    // The poll no longer decodes the wallpaper every time. It reads the registry
+    // value - a cheap string - and only re-decodes when the path actually changed.
+    // Decoding unconditionally every 5s allocated a fresh image buffer plus the
+    // image plugin on each pass, which is what made the bar creep from 50 MB up
+    // towards 90 over a session.
     m_timer = new QTimer(this);
-    m_timer->setInterval(5000);
-    connect(m_timer, &QTimer::timeout, this, &ContrastService::refresh);
+    m_timer->setInterval(2000);
+    connect(m_timer, &QTimer::timeout, this, &ContrastService::pollWallpaper);
     m_timer->start();
+}
+
+void ContrastService::pollWallpaper() {
+    const QString path = currentWallpaperPath();
+    if (path == m_lastWallpaperPath) return;
+    m_lastWallpaperPath = path;
+    refresh();
+}
+
+QString ContrastService::currentWallpaperPath() const {
+    const QString spi = wallpaperPath();
+    if (!spi.isEmpty()) return spi;
+
+    HKEY key = nullptr;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Control Panel\\Desktop",
+                      0, KEY_READ, &key) != ERROR_SUCCESS) {
+        return QString();
+    }
+    DWORD size = 0, type = 0;
+    QString result;
+    if (RegQueryValueExW(key, L"Wallpaper", nullptr, &type, nullptr, &size) == ERROR_SUCCESS && size > 2) {
+        std::vector<wchar_t> buf(size / sizeof(wchar_t) + 1, L'\0');
+        if (RegQueryValueExW(key, L"Wallpaper", nullptr, &type,
+                             reinterpret_cast<BYTE*>(buf.data()), &size) == ERROR_SUCCESS) {
+            result = QString::fromWCharArray(buf.data());
+        }
+    }
+    RegCloseKey(key);
+    return result;
 }
 
 void ContrastService::setAutoContrast(bool on) {

@@ -1,5 +1,7 @@
 #pragma once
+#include <QMap>
 #include <QObject>
+#include <QQmlComponent>
 #include <QQuickWindow>
 #include <QQuickItem>
 #include <QRect>
@@ -66,6 +68,14 @@ private:
     QString m_popupUrl;
     bool m_closing = false;
     bool m_hook = false;
+    // One component per popup URL, kept for the process lifetime. There are only
+    // a handful of popups and each is small, so the flat cost is worth it against
+    // rebuilding one on every open - see open() for why that leaked.
+    //
+    // Raw QObject* rather than a smart pointer or the component itself: the
+    // PopupHost owns these and outlives every popup, and QQmlComponent is
+    // neither copyable nor movable so it cannot be a container value type.
+    QMap<QString, QQmlComponent*> m_components;
     static HHOOK s_hook;
     static PopupHost* s_instance;
 };
