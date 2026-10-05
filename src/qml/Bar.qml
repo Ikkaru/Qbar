@@ -19,8 +19,15 @@ Rectangle {
             if (barWindow.backdropMode === "solid")
                 return Qt.rgba(barWindow.backdropColor.r, barWindow.backdropColor.g,
                                barWindow.backdropColor.b, barWindow.backdropOpacity)
+            // Acrylic's blur comes from the window manager, but Windows 11 renders
+            // the material at its own density and ignores the requested tint, so
+            // this layer is the only real density control. It is deliberately
+            // faint: the point of the mode is that the wallpaper stays visible
+            // through the blur. At backdropStrength 0 the bar is pure glass.
             if (barWindow.backdropMode === "acrylic")
-                return Qt.rgba(0, 0, 0, barWindow.backdropStrength * 0.35)
+                return Qt.rgba(barWindow.backdropColor.r, barWindow.backdropColor.g,
+                               barWindow.backdropColor.b,
+                               barWindow.backdropStrength * 0.55)
             // "clear" is still a dark scrim, not zero alpha. Pure transparency
             // leaves white text sitting straight on the wallpaper, which reads as
             // a halo on light backgrounds. surfaceOpacity controls how much of

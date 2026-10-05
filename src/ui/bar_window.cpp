@@ -83,12 +83,16 @@ void BarWindow::loadQml(const QUrl& url) {
 void BarWindow::setBackdropStrength(double s) {
     if (qFuzzyCompare(m_backdropStrength, s)) return;
     m_backdropStrength = s;
+    // The acrylic tint alpha is derived from this, so it has to be re-applied or
+    // changing the strength in config would do nothing at all.
+    applyBackdrop();
     emit backdropChanged();
 }
 
 void BarWindow::setBackdropColor(const QColor& c) {
     if (m_backdropColor == c) return;
     m_backdropColor = c;
+    applyBackdrop();
     emit backdropChanged();
 }
 
@@ -112,15 +116,42 @@ void BarWindow::setBorderColor(const QColor& c) {
 
 void BarWindow::applyBackdrop() {
     HWND hwnd = reinterpret_cast<HWND>(winId());
-    const bool wantsBackdrop = (m_backdrop == "acrylic" || m_backdrop == "mica");
+    if (!hwnd) return;
 
-    // A DWM system backdrop always fills the whole window rectangle. It cannot
-    // be shaped, so a rounded pill would show raw material in the corner voids.
-    if (wantsBackdrop && m_shape == "square") {
-        Dwm::enableBackdrop(hwnd, m_backdrop);
-    } else {
+    // Dark mode first, and before any material is selected. DWM picks the light
+    // or dark variant of a material from this flag alone, and setting it after
+    // the backdrop leaves the window on the light one until it is recreated.
+    Dwm::setDarkMode(hwnd, true);
+
+    if (m_backdrop == "acrylic") {
+        // The composition attribute, not DWMWA_SYSTEMBACKDROP_TYPE. The system
+        // backdrop paints a flat tint with no blur at all - measured on this
+        // machine as a uniform 69,69,69 across the whole bar - which reads as a
+        // solid block. The accent path blurs what is actually behind the window
+        // and honours the tint alpha, so `backdropStrength` can dial it from
+        // clear glass to near-opaque.
         Dwm::disableBackdrop(hwnd);
+        Dwm::setAcrylic(hwnd, m_backdropColor, m_backdropStrength);
+        return;
     }
+
+    // No acrylic tint to apply, so clear any leftover accent policy.
+    Dwm::clearAcrylic(hwnd);
+
+    if (m_backdrop == "mica") {
+        // Mica is a solid material by design - it samples the window's own
+        // background rather than the desktop, so it is flat on purpose. Only
+        // enabled for square: a DWM backdrop fills the whole window rectangle
+        // and cannot be shaped, so a rounded pill would show raw material in
+        // the corner voids.
+        if (m_shape == "square")
+            Dwm::enableBackdrop(hwnd, "mica");
+        else
+            Dwm::disableBackdrop(hwnd);
+        return;
+    }
+
+    Dwm::disableBackdrop(hwnd);
 }
 
 void BarWindow::setBackdrop(const QString& backdrop) {
