@@ -24,6 +24,12 @@
 #define DWMWCP_NONE 1
 #endif
 
+// Kept for completeness, but nothing calls it: the only backdrop Windows can
+// actually tune is the composition accent, and both system-backdrop types are
+// unusable for a bar. DWMSBT_MAINWINDOW (Mica) samples the window's own
+// background, so it is flat and its tint is locked; DWMSBT_TRANSIENTWINDOW
+// (acrylic) paints a flat tint with no blur. Both measured uniform across the
+// whole bar while the wallpaper behind them varied.
 void Dwm::enableBackdrop(HWND hwnd, const QString& type) {
     if (!hwnd) return;
     int backdrop = DWMSBT_NONE;

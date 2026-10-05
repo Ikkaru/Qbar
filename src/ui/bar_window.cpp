@@ -139,15 +139,19 @@ void BarWindow::applyBackdrop() {
     Dwm::clearAcrylic(hwnd);
 
     if (m_backdrop == "mica") {
-        // Mica is a solid material by design - it samples the window's own
-        // background rather than the desktop, so it is flat on purpose. Only
-        // enabled for square: a DWM backdrop fills the whole window rectangle
-        // and cannot be shaped, so a rounded pill would show raw material in
-        // the corner voids.
-        if (m_shape == "square")
-            Dwm::enableBackdrop(hwnd, "mica");
-        else
-            Dwm::disableBackdrop(hwnd);
+        // Deliberately NOT DWMSBT_MAINWINDOW. Real Mica samples the window's own
+        // background rather than the desktop, so it measures as a flat 29,29,29
+        // with no blur at all, and its tint cannot be tuned: setting the window's
+        // class background brush to five different colours left it at exactly
+        // 29,29,29 every time. A material that cannot be made less strong or
+        // less weak is not usable for a bar.
+        //
+        // The accent blur gives real Mica-like behaviour - a neutral wash that
+        // stays legible - and the QML layer above it sets the density. That is
+        // what finally makes the "medium strength Mica" this mode is for
+        // reachable, rather than the two available extremes.
+        Dwm::disableBackdrop(hwnd);
+        Dwm::setAcrylic(hwnd, m_backdropColor, m_backdropStrength);
         return;
     }
 

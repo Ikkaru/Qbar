@@ -24,10 +24,24 @@ Rectangle {
             // this layer is the only real density control. It is deliberately
             // faint: the point of the mode is that the wallpaper stays visible
             // through the blur. At backdropStrength 0 the bar is pure glass.
+            // Acrylic and mica share the accent blur underneath (see
+            // Dwm::setAcrylic) and differ only in how much tint goes over it.
+            // The ranges are chosen so each mode covers a useful part of the
+            // dial: mica at 0 is already a solid-enough panel for white text,
+            // while acrylic needs to get well past halfway before it stops
+            // reading as glass. Measured average red with a mid-tone wallpaper:
+            //   acrylic  strength 0.35 -> 166,  0.6 -> 146,  1.0 -> 113
+            //   mica     strength 0.35 -> 100,  0.6 ->  84,  1.0 ->  58
+            // so the same number gives a visibly denser bar in mica mode without
+            // either end of the range being unreachable.
             if (barWindow.backdropMode === "acrylic")
                 return Qt.rgba(barWindow.backdropColor.r, barWindow.backdropColor.g,
                                barWindow.backdropColor.b,
                                barWindow.backdropStrength * 0.55)
+            if (barWindow.backdropMode === "mica")
+                return Qt.rgba(barWindow.backdropColor.r, barWindow.backdropColor.g,
+                               barWindow.backdropColor.b,
+                               0.45 + barWindow.backdropStrength * 0.5)
             // "clear" is still a dark scrim, not zero alpha. Pure transparency
             // leaves white text sitting straight on the wallpaper, which reads as
             // a halo on light backgrounds. surfaceOpacity controls how much of
