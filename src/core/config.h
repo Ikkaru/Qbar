@@ -35,6 +35,10 @@ struct BarConfig {
     // because it does the actual separating, while the gradient only softens it.
     bool shadowHairline = true;
     double shadowHairlineOpacity = 0.28;
+    // Add or remove an HKCU Run entry at startup. The user can also flip it from
+    // Task Manager's Startup tab at any time; sync() only acts when the two
+    // disagree.
+    bool autostart = false;
 };
 
 struct ThemeConfig {

@@ -10,6 +10,8 @@
 #include "core/theme.h"
 #include "core/module_registry.h"
 #include "core/hotkeys.h"
+#include "platform/autostart.h"
+#include "platform/single_instance.h"
 #include "services/clock_service.h"
 #include "services/workspaces_service.h"
 #include "services/window_status_service.h"
@@ -57,17 +59,36 @@ static QString loadIconFont() {
     return families.first();
 }
 
-static QString findConfigPath() {    const QStringList candidates = {
-        QCoreApplication::applicationDirPath() + "/config.json",
-        QCoreApplication::applicationDirPath() + "/../resources/config.json",
+// Config lookup order matters more than it looks.
+//
+// The source tree wins over the copy next to the exe, on purpose. `deploy` puts
+// a config.json beside the binary so an installed bar is self-contained, but in
+// the dev tree that copy sits at build\Release\config.json while the file being
+// edited is resources\config.json. Preferring the exe-adjacent copy meant that
+// after one deploy, editing the source config did nothing at all - including for
+// the file watcher, which watches whichever file was found.
+//
+// The dev candidate is "two levels up from the exe into resources/", which
+// resolves inside this repository and nowhere else: an installed copy sitting in
+// its own folder has no such path, so it falls through to the flat one.
+//
+// CWD is never trusted. Explorer launches with a useless CWD, a Run entry
+// inherits whatever the shell had, and a shortcut may point at the Start Menu.
+static QString findConfigPath() {
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const QStringList candidates{
+        appDir + "/../../resources/config.json",  // dev tree: build/Release -> source
+        appDir + "/config.json",                   // installed, flat
+        appDir + "/resources/config.json",         // installed with a subdir
         QDir::current().filePath("config.json"),
         QDir::current().filePath("resources/config.json"),
-        QString("D:/project/Qbar/resources/config.json"),
+        QStringLiteral("D:/project/Qbar/resources/config.json"),  // last-ditch dev
     };
     for (const auto& p : candidates) {
         if (QFile::exists(p)) return QDir(p).absolutePath();
     }
-    return candidates.last();
+    // Nothing found. Return the location the user can actually create a file in.
+    return candidates[1];
 }
 
 int main(int argc, char* argv[]) {
@@ -76,6 +97,17 @@ int main(int argc, char* argv[]) {
     app.setQuitOnLastWindowClosed(false);
     app.setApplicationName("qbar");
     app.setOrganizationName("qbar");
+
+    // Before anything else. Two bars means two AppBar registrations, two
+    // low-level mouse hooks and two fullscreen pollers over the same screen.
+    // With autostart in play this is not a hypothetical: the bar is already
+    // running by the time anyone finds the exe and double-clicks it.
+    SingleInstance instance;
+    if (!instance.acquire()) {
+        // Exit quietly. This is the normal result of launching a copy that is
+        // already up, and a message box for it would be noise.
+        return 0;
+    }
 
     loadFonts();
 
@@ -106,6 +138,12 @@ int main(int argc, char* argv[]) {
     VolumeService volume;
     ContrastService contrast;
     PopupHost popupHost;
+
+    // Autostart registers itself against the config, so editing bar.autostart and
+    // saving is enough - no separate "apply" step, and the file watcher picks up
+    // the change like any other setting.
+    Autostart autostart;
+    autostart.sync(config.bar.autostart);
 
     // Wire window status to foreground window changes
     QTimer windowStatusTimer;
@@ -169,6 +207,7 @@ int main(int argc, char* argv[]) {
     engine.rootContext()->setContextProperty("graphService", &graph);
     engine.rootContext()->setContextProperty("networkService", &network);
     engine.rootContext()->setContextProperty("popupHost", &popupHost);
+    engine.rootContext()->setContextProperty("autostart", &autostart);
     engine.rootContext()->setContextProperty("volumeService", &volume);
     engine.rootContext()->setContextProperty("contrastService", &contrast);
 
@@ -183,6 +222,9 @@ int main(int argc, char* argv[]) {
         config.load(configPath);
         theme.generate(config.themeSeed());
         theme.setFont(config.theme.font);
+        // Re-sync so flipping bar.autostart and saving config.json registers or
+        // removes the Run entry without a restart.
+        autostart.sync(config.bar.autostart);
         registry.setConfig(&config);
         clock.setFormat(config.moduleConfig("clock").value("format").toString("HH:mm"));
         contrast.setAutoContrast(config.theme.autoContrast);

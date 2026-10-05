@@ -1,4 +1,4 @@
-﻿{
+{
   "bar": {
     "position": "top",
     "integrations": "appbar",
@@ -21,7 +21,8 @@
     "shadowHeight": 9,
     "shadowOpacity": 0.16,
     "shadowHairline": false,
-    "shadowHairlineOpacity": 0.28
+    "shadowHairlineOpacity": 0.28,
+    "autostart": true
   },
   "theme": {
     "seed": "#89b4fa",

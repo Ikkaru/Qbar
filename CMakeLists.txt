@@ -22,6 +22,10 @@ qt_add_executable(qbar
     src/core/module_registry.cpp
     src/platform/dwm.h
     src/platform/dwm.cpp
+    src/platform/autostart.h
+    src/platform/autostart.cpp
+    src/platform/single_instance.h
+    src/platform/single_instance.cpp
     src/services/clock_service.h
     src/services/clock_service.cpp
     src/services/workspaces_service.h
@@ -66,6 +70,43 @@ set_target_properties(qbar PROPERTIES
     MACOSX_BUNDLE ON
 )
 
+# --- deployment --------------------------------------------------------------
+# Without this the exe cannot start at all outside a Qt-enabled shell: it exits
+# with 0xC0000135 STATUS_DLL_NOT_FOUND, silently, because it is built as a GUI
+# subsystem app with no console to print anything. windeployqt copies the Qt
+# runtime next to the binary and config.json goes with it, which is what makes
+# the bar relocatable and what autostart needs in order to work at all.
+#
+# A manual target rather than POST_BUILD: it copies ~30 MB and takes several
+# seconds, which is not something to pay on every rebuild.
+find_program(WINDEPLOYQT windeployqt HINTS "${QT6_INSTALL_PREFIX}/bin" NO_CACHE)
+
+if(WINDEPLOYQT)
+    add_custom_target(deploy
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/resources/config.json"
+                "$<TARGET_FILE_DIR:qbar>/config.json"
+        # --qmldir is not optional. windeployqt finds QML imports by scanning loose
+        # .qml files, and ours all live inside resources.qrc inside the exe, which
+        # it does not read. Without this it copies no QML plugins at all and the
+        # deployed bar comes up with a window but no content:
+        #     QML error: module "QtQuick.Layouts" is not installed
+        # The path is src/qml because that is the root holding Bar.qml and the
+        # modules/ and popups/ subdirectories beneath it.
+        COMMAND ${WINDEPLOYQT}
+                --qmldir "${CMAKE_CURRENT_SOURCE_DIR}/src/qml"
+                --no-translations
+                --no-system-d3d-compiler
+                --no-opengl-sw
+                --compiler-runtime
+                "$<TARGET_FILE:qbar>"
+        COMMENT "Copying Qt runtime next to qbar.exe so it runs without Qt on PATH"
+        VERBATIM
+    )
+else()
+    message(WARNING "windeployqt not found - qbar.exe will not start outside a Qt shell")
+endif()
+
 # --- tests -------------------------------------------------------------------
 # QTest from the Qt already in the toolchain, so no new dependency. The
 # services under test are plain QObjects, so every binary here runs guiless.
@@ -82,6 +123,8 @@ set(QBAR_TESTABLE_SOURCES
     src/core/theme.cpp
     src/core/module_registry.h
     src/core/module_registry.cpp
+    src/platform/autostart.h
+    src/platform/autostart.cpp
 )
 
 # A tiny helper rather than repeating the list per test.
@@ -98,6 +141,7 @@ function(qbar_add_test name)
 endfunction()
 
 qbar_add_test(test_config tests/test_config.cpp)
+qbar_add_test(test_autostart tests/test_autostart.cpp)
 # WORKING_DIRECTORY so tests that read the real resources/config.json resolve it
 # relative to the source tree, not to wherever ctest was invoked from.
 qbar_add_test(test_theme tests/test_theme.cpp)

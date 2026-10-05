@@ -44,6 +44,7 @@ bool Config::load(const QString& path) {
         bar.shadowOpacity = b.value("shadowOpacity").toDouble(0.22);
         bar.shadowHairline = b.value("shadowHairline").toBool(true);
         bar.shadowHairlineOpacity = b.value("shadowHairlineOpacity").toDouble(0.28);
+        bar.autostart = b.value("autostart").toBool(false);
     }
 
     if (root.contains("theme")) {
@@ -111,6 +112,7 @@ bool Config::save(const QString& path) const {
     b["shadowOpacity"] = bar.shadowOpacity;
     b["shadowHairline"] = bar.shadowHairline;
     b["shadowHairlineOpacity"] = bar.shadowHairlineOpacity;
+    b["autostart"] = bar.autostart;
 
     QJsonObject t;
     t["seed"] = theme.seed;
