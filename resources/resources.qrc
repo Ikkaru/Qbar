@@ -11,6 +11,7 @@
         <file alias="qml/popups/VolumePopup.qml">../src/qml/popups/VolumePopup.qml</file>
         <file alias="qml/popups/NetworkPopup.qml">../src/qml/popups/NetworkPopup.qml</file>
         <file alias="qml/popups/BatteryPopup.qml">../src/qml/popups/BatteryPopup.qml</file>
+        <file alias="qml/popups/VolumeLevelPopup.qml">../src/qml/popups/VolumeLevelPopup.qml</file>
         <file alias="fonts/Poppins-Regular.ttf">../resources/fonts/Poppins-Regular.ttf</file>
         <file alias="fonts/Poppins-Medium.ttf">../resources/fonts/Poppins-Medium.ttf</file>
         <file alias="fonts/Poppins-SemiBold.ttf">../resources/fonts/Poppins-SemiBold.ttf</file>

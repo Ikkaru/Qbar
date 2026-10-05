@@ -1,4 +1,4 @@
-{
+﻿{
   "bar": {
     "position": "top",
     "integrations": "appbar",
@@ -8,7 +8,7 @@
     "marginHorizontal": 12,
     "hideOnFullWindow": false,
     "hideOnFullscreen": true,
-    "backdrop": "acrylic",
+    "backdrop": "clear",
     "backdropStrength": 0.15,
     "backdropColor": "#12121a",
     "backdropOpacity": 0.55,

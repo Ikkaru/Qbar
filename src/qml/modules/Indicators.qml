@@ -127,8 +127,19 @@ Rectangle {
 
             MouseArea {
                 anchors.fill: parent
+                hoverEnabled: true
+                // Hover gives the level readout; click gives the full mixer.
+                // onEntered only opens when nothing is showing, otherwise moving
+                // the pointer onto the icon right after closing the mixer would pop
+                // a tooltip back up on its own.
+                onEntered: {
+                    popupHost.anchor = volumeIcon;
+                    if (!popupHost.isOpen)
+                        popupHost.open("qrc:/qml/popups/VolumeLevelPopup.qml")
+                }
+                onExited: popupHost.close()
                 onClicked: {
-                    popupHost.anchor = volumeIcon
+                    popupHost.anchor = volumeIcon;
                     popupHost.open("qrc:/qml/popups/VolumePopup.qml")
                 }
             }
