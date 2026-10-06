@@ -25,8 +25,23 @@ void PopupHost::setAnchor(QQuickItem* item) {
     emit anchorChanged();
 }
 
-void PopupHost::open(const QString& url) {
+void PopupHost::open(const QString& url, bool interactive) {
     const bool wasOpen = (m_popup != nullptr);
+
+    // An open interactive popup is not replaced by a hover tooltip.
+    //
+    // The pointer has to be free to travel across the bar while the mixer is up -
+    // sliding over a battery icon on the way to the wifi tooltip passes through
+    // hover areas that call open(). Replacing unconditionally meant the mixer
+    // vanished the instant the pointer crossed one of them, which is the same
+    // "closes mid-gesture" problem the interactive flag fixed on the way in.
+    //
+    // The anchor is left alone too. Reassigning it to the icon that was merely
+    // passed over would move the dismissal rect away from the real anchor, so a
+    // click on the volume icon would no longer count as inside the popup.
+    if (m_popup && m_interactive && !interactive)
+        return;
+
     // Clicking the same anchor again dismisses the popup. Without this the
     // popup had no way to close, because WindowDeactivate fires immediately
     // after show and killed it the moment it opened.
@@ -37,6 +52,7 @@ void PopupHost::open(const QString& url) {
     // Replacing a popup must not animate: the old one is going away outright.
     finishClose();
     m_popupUrl = url;
+    m_interactive = interactive;
     if (wasOpen) emit isOpenChanged();
 
     // PopupHost itself is a context property, so qmlEngine(this) can be null.
@@ -154,6 +170,14 @@ void PopupHost::close() {
     emit isOpenChanged();
 }
 
+void PopupHost::closeIfTransient() {
+    // The anchor's onExited lands here. An interactive popup survives it, because
+    // the pointer leaving the icon is exactly what happens on the way into the
+    // popup - the gesture that reaches for a slider begins by crossing that edge.
+    if (m_interactive) return;
+    close();
+}
+
 void PopupHost::finishClose() {
     m_closeTimer.stop();
     m_closing = false;
@@ -163,6 +187,7 @@ void PopupHost::finishClose() {
         m_popup->deleteLater();
         m_popup = nullptr;
         m_popupUrl.clear();   // already cleared by close(); harmless if open() called this
+        m_interactive = false;
         emit isOpenChanged();
     }
 }

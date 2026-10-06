@@ -18,6 +18,14 @@ class PopupHost : public QObject {
     // only the second one prevents a tooltip springing back up after its own
     // popup closed.
     Q_PROPERTY(QString currentUrl READ currentUrl NOTIFY isOpenChanged)
+    // Whether the open popup is transient or interactive.
+    //
+    // A transient popup is a readout: it goes away as soon as the pointer leaves
+    // the anchor. An interactive one contains controls the user has to reach -
+    // the volume mixer needs the pointer to travel from the icon down into the
+    // popup to grab a slider, and that journey crosses the icon's hover area, so
+    // treating it like a readout closes it mid-gesture.
+    Q_PROPERTY(bool interactive READ interactiveValue NOTIFY isOpenChanged)
 
 public:
     explicit PopupHost(QObject* parent = nullptr);
@@ -25,9 +33,16 @@ public:
     QQuickItem* anchor() const { return m_anchor; }
     void setAnchor(QQuickItem* item);
     QString currentUrl() const { return m_popupUrl; }
+    bool interactiveValue() const { return m_interactive; }
 
-    Q_INVOKABLE void open(const QString& url);
+    // interactive marks the popup as one the pointer has to be able to travel
+    // into, so the anchor's onExited must not close it. Only the low-level press
+    // hook can dismiss an interactive popup.
+    Q_INVOKABLE void open(const QString& url, bool interactive = false);
     Q_INVOKABLE void close();
+    // Close only if the popup is transient. QML's onExited calls this rather
+    // than close(), so a single handler works for both kinds of popup.
+    Q_INVOKABLE void closeIfTransient();
     // Destroys the popup without animating. Called by open() when replacing a
     // popup, and by the close timer once the close animation has had time to
     // finish. Keeping the timer here rather than in QML means a popup that is
@@ -68,6 +83,7 @@ private:
     QString m_popupUrl;
     bool m_closing = false;
     bool m_hook = false;
+    bool m_interactive = false;
     // One component per popup URL, kept for the process lifetime. There are only
     // a handful of popups and each is small, so the flat cost is worth it against
     // rebuilding one on every open - see open() for why that leaked.

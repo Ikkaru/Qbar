@@ -54,7 +54,7 @@ Rectangle {
             if (popupHost.currentUrl !== "qrc:/qml/popups/NetworkPopup.qml")
                 popupHost.open("qrc:/qml/popups/NetworkPopup.qml");
         }
-        onExited: popupHost.close()
+        onExited: popupHost.closeIfTransient()
         onClicked: {
             popupHost.close();
             barManager.openQuickSettings();

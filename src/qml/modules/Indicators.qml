@@ -113,7 +113,7 @@ Rectangle {
                     if (popupHost.currentUrl !== "qrc:/qml/popups/BatteryPopup.qml")
                         popupHost.open("qrc:/qml/popups/BatteryPopup.qml")
                 }
-                onExited: popupHost.close()
+                onExited: popupHost.closeIfTransient()
             }
         }
 
@@ -149,10 +149,15 @@ Rectangle {
                     if (popupHost.currentUrl !== "qrc:/qml/popups/VolumeLevelPopup.qml")
                         popupHost.open("qrc:/qml/popups/VolumeLevelPopup.qml")
                 }
-                onExited: popupHost.close()
+                // closeIfTransient, not close: the mixer is interactive, and
+                // reaching for a slider starts by leaving the icon.
+                onExited: popupHost.closeIfTransient()
                 onClicked: {
                     popupHost.anchor = volumeIcon;
-                    popupHost.open("qrc:/qml/popups/VolumePopup.qml")
+                    // interactive = true. Without it the popup is treated as a
+                    // readout and closes the moment the pointer leaves the icon on
+                    // its way down to the controls.
+                    popupHost.open("qrc:/qml/popups/VolumePopup.qml", true)
                 }
             }
         }
