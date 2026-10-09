@@ -28,6 +28,11 @@ Window {
     readonly property bool plugged: present && battery.plugged
     readonly property bool holding: present && battery.holding
     readonly property bool saver: present && battery.saver
+    // Must exist on the root: fillColor below reads it unqualified. Without it
+    // the binding throws ReferenceError on first evaluation, QML discards the
+    // binding, and fillColor stays at its default #000000 - so the bar went
+    // black whether or not the cable was in, which is the reported bug.
+    readonly property bool charging: present && battery.charging
 
     // One status line. Power saving is checked before smart charge, matching the
     // icon order in Indicators.qml: holding is true at any full battery on AC, so
@@ -63,7 +68,13 @@ Window {
     // "Fully charged" covers both a full battery and one being held at full by
     // a charge limit, since they look the same to the user: 100% and no longer
     // moving.
-    readonly property bool full: battery.percent >= 100 || holding
+    //
+    // Gated on plugged. Unplugged has to reach the white fallback below, and
+    // without the gate a battery unplugged a moment after reaching 100% read
+    // percent >= 100 and came out deep blue - which is not a state the machine
+    // is in, since with the cable out it is draining. holding already implies
+    // plugged, so it is left alone.
+    readonly property bool full: plugged && (battery.percent >= 100 || holding)
 
     readonly property color fillColor: battery.percent <= 20 ? theme.error
                                   : saver ? theme.tertiary
